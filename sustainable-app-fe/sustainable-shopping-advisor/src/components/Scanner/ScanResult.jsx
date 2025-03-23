@@ -1,98 +1,149 @@
 import React from 'react'
-import {
-  Box,
-  Text,
-  HStack,
-  Badge,
-  IconButton,
-  useToast,
-  useClipboard,
-  VStack
-} from '@chakra-ui/react'
-import { FaCopy, FaExternalLinkAlt } from 'react-icons/fa'
-import { formatTimestamp, isUrl } from '../../services/scannerService'
+import { FaCopy, FaExternalLinkAlt, FaEnvelope, FaPhone } from 'react-icons/fa'
+import useClipboard from '../../hooks/useClipboard'
+import { formatTimestamp, formatQrFormat } from '../../utils/formatters'
+import { isValidUrl, isValidEmail, isValidPhone } from '../../utils/validators'
+import Card from '../UI/Card'
+import Button from '../UI/Button'
 
 /**
- * Component to display a single scan result
+ * Scan result component
  * @param {Object} props - Component props
- * @param {Object} props.data - Scan result data
+ * @param {Object} props.result - Scan result data
  * @param {boolean} props.isLatest - Whether this is the latest scan
- * @param {string} props.bgColor - Background color override
  * @returns {JSX.Element} Scan result component
  */
-const ScanResult = ({ data, isLatest = false, bgColor }) => {
-  const toast = useToast()
-  const { hasCopied, onCopy } = useClipboard(data.code)
+const ScanResult = ({ result, isLatest = false }) => {
+  const { code, format, timestamp } = result || {}
   
-  // Check if the scanned content is a URL
-  const isUrlContent = isUrl(data.code)
+  // Check content type
+  const isUrl = isValidUrl(code)
+  const isEmail = isValidEmail(code)
+  const isPhone = isValidPhone(code)
   
-  // Handle copy to clipboard with toast feedback
-  const handleCopy = () => {
-    onCopy()
-    toast({
-      title: "Copied to clipboard",
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-    })
+  // Setup clipboard 
+  const { hasCopied, copyToClipboard } = useClipboard(code)
+  
+  if (!result || !code) {
+    return null
   }
   
   return (
-    <Box 
-      p={4} 
-      borderWidth="1px" 
-      borderRadius="md" 
-      borderColor={isLatest ? "blue.200" : "gray.200"}
-      bg={bgColor || (isLatest ? "blue.50" : "white")}
-      mb={3}
-      position="relative"
+    <Card 
+      className={isLatest ? 'latest-scan' : ''}
+      style={{
+        borderColor: isLatest ? '#bee3f8' : undefined,
+        backgroundColor: isLatest ? '#ebf8ff' : undefined,
+        position: 'relative'
+      }}
     >
       {isLatest && (
-        <Badge 
-          position="absolute" 
-          top="-10px" 
-          right="10px" 
-          colorScheme="blue"
-          fontSize="xs"
+        <div
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '10px',
+            backgroundColor: '#3182ce',
+            color: 'white',
+            fontSize: '0.75rem',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '0.25rem',
+          }}
         >
           Latest Scan
-        </Badge>
+        </div>
       )}
       
-      <VStack align="start" spacing={2}>
-        <Text fontWeight="bold" fontSize="lg" wordBreak="break-all">
-          {data.code}
-        </Text>
+      <div 
+        style={{
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          marginBottom: '0.5rem',
+          wordBreak: 'break-all'
+        }}
+      >
+        {code}
+      </div>
+      
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '0.5rem',
+          flexWrap: 'wrap',
+          gap: '0.5rem'
+        }}
+      >
+        <span
+          style={{
+            backgroundColor: '#805ad5',
+            color: 'white',
+            fontSize: '0.75rem',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '0.25rem',
+          }}
+        >
+          {formatQrFormat(format) || 'QR Code'}
+        </span>
         
-        <HStack spacing={2}>
-          <Badge colorScheme="purple">{data.format}</Badge>
-          {data.timestamp && (
-            <Text fontSize="sm" color="gray.500">
-              {formatTimestamp(data.timestamp)}
-            </Text>
-          )}
-        </HStack>
+        {timestamp && (
+          <span style={{ fontSize: '0.875rem', color: '#718096' }}>
+            {formatTimestamp(timestamp)}
+          </span>
+        )}
+      </div>
+      
+      <div 
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginTop: '0.75rem',
+          flexWrap: 'wrap'
+        }}
+      >
+        <Button 
+          onClick={copyToClipboard} 
+          variant="outline"
+          size="sm"
+          icon={<FaCopy />}
+        >
+          {hasCopied ? 'Copied!' : 'Copy'}
+        </Button>
         
-        <HStack spacing={2} mt={2}>
-          <IconButton
-            aria-label="Copy to clipboard"
-            icon={<FaCopy />}
+        {isUrl && (
+          <Button 
+            onClick={() => window.open(code, '_blank')} 
+            variant="outline"
             size="sm"
-            onClick={handleCopy}
-          />
-          
-          {isUrlContent && (
-            <IconButton
-              aria-label="Open URL"
-              icon={<FaExternalLinkAlt />}
-              size="sm"
-              onClick={() => window.open(data.code, '_blank')}
-            />
-          )}
-        </HStack>
-      </VStack>
-    </Box>
+            icon={<FaExternalLinkAlt />}
+          >
+            Open Link
+          </Button>
+        )}
+        
+        {isEmail && (
+          <Button 
+            onClick={() => window.open(`mailto:${code}`, '_blank')} 
+            variant="outline"
+            size="sm"
+            icon={<FaEnvelope />}
+          >
+            Send Email
+          </Button>
+        )}
+        
+        {isPhone && (
+          <Button 
+            onClick={() => window.open(`tel:${code}`, '_blank')} 
+            variant="outline"
+            size="sm"
+            icon={<FaPhone />}
+          >
+            Call
+          </Button>
+        )}
+      </div>
+    </Card>
   )
 }
 

@@ -1,59 +1,72 @@
 import React from 'react'
-import { Box, Heading, Text, useColorModeValue } from '@chakra-ui/react'
 
 /**
- * Custom card component
+ * Card component
  * @param {Object} props - Component props
- * @param {string} props.title - Card title
  * @param {React.ReactNode} props.children - Card content
- * @param {Object} props.headerProps - Props for the header
- * @param {Object} props.contentProps - Props for the content
- * @param {Object} props.footerProps - Props for the footer
+ * @param {string} props.title - Card title
+ * @param {React.ReactNode} props.footer - Card footer content
+ * @param {string} props.className - Additional class names
+ * @param {Object} props.style - Additional styles
  * @returns {JSX.Element} Card component
  */
 const Card = ({ 
-  title, 
   children, 
-  headerProps = {}, 
-  contentProps = {}, 
-  footerProps = {},
+  title, 
   footer,
-  ...rest 
+  className = '',
+  style = {},
+  ...rest
 }) => {
-  const bgColor = useColorModeValue('white', 'gray.700')
-  const borderColor = useColorModeValue('gray.200', 'gray.600')
-  
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      overflow="hidden"
-      boxShadow="sm"
-      bg={bgColor}
-      borderColor={borderColor}
+    <div
+      className={`card ${className}`}
+      style={{
+        backgroundColor: 'white',
+        borderRadius: '0.5rem',
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        marginBottom: '1rem',
+        ...style
+      }}
       {...rest}
     >
       {title && (
-        <Box p={4} borderBottomWidth="1px" {...headerProps}>
-          <Heading size="md">{title}</Heading>
-        </Box>
+        <div 
+          className="card-header"
+          style={{
+            padding: '1rem',
+            borderBottom: '1px solid #e2e8f0',
+            fontWeight: 600
+          }}
+        >
+          {title}
+        </div>
       )}
       
-      <Box p={4} {...contentProps}>
+      <div 
+        className="card-body"
+        style={{
+          padding: '1rem'
+        }}
+      >
         {children}
-      </Box>
+      </div>
       
       {footer && (
-        <Box 
-          p={4} 
-          borderTopWidth="1px" 
-          borderColor={borderColor}
-          {...footerProps}
+        <div 
+          className="card-footer"
+          style={{
+            padding: '1rem',
+            borderTop: '1px solid #e2e8f0',
+            backgroundColor: '#f7fafc'
+          }}
         >
           {footer}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 

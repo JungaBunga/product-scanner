@@ -1,187 +1,118 @@
 import { useState, useEffect, useRef } from 'react'
-import Quagga from 'quagga'
+import { Html5Qrcode } from 'html5-qrcode'
 
 /**
- * Custom hook for handling QR/barcode scanning with Quagga
- * @param {Object} options - Scanner options
- * @param {Function} options.onDetected - Callback when code is detected
- * @param {Boolean} options.startOnMount - Whether to start scanner on mount
+ * Custom hook for QR code scanning using html5-qrcode
+ * @param {Object} options - Hook options
+ * @param {Function} options.onDetected - Callback on successful scan
+ * @param {Function} options.onError - Callback on scan error
  * @returns {Object} Scanner methods and state
  */
-const useScanner = ({ onDetected, startOnMount = false }) => {
+const useScanner = ({ onDetected, onError }) => {
   const [isScanning, setIsScanning] = useState(false)
   const [cameras, setCameras] = useState([])
   const [selectedCamera, setSelectedCamera] = useState(null)
   const [torchOn, setTorchOn] = useState(false)
   const scannerRef = useRef(null)
+  const html5QrCodeRef = useRef(null)
 
   // Get available cameras
   useEffect(() => {
-    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-      navigator.mediaDevices.enumerateDevices()
-        .then(devices => {
-          const videoDevices = devices.filter(device => device.kind === 'videoinput')
-          setCameras(videoDevices)
-          if (videoDevices.length > 0) {
-            setSelectedCamera(videoDevices[0].deviceId)
-          }
-        })
-        .catch(err => {
-          console.error('Error enumerating devices', err)
-        })
-    }
-  }, [])
-
-  // Initialize scanner
-  const initScanner = () => {
-    if (!scannerRef.current) return
-
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: scannerRef.current,
-        constraints: {
-          width: 640,
-          height: 480,
-          facingMode: "environment",
-          deviceId: selectedCamera ? { exact: selectedCamera } : undefined
-        },
-      },
-      locator: {
-        patchSize: "medium",
-        halfSample: true
-      },
-      numOfWorkers: navigator.hardwareConcurrency || 4,
-      decoder: {
-        readers: [
-          "code_128_reader",
-          "ean_reader",
-          "ean_8_reader",
-          "code_39_reader",
-          "code_93_reader",
-          "upc_reader",
-          "upc_e_reader",
-          "codabar_reader",
-          "qr_code_reader"
-        ]
-      },
-      locate: true
-    }, function(err) {
-      if (err) {
-        console.error('Quagga initialization error', err)
-        return
-      }
-      setIsScanning(true)
-      Quagga.start()
-    })
-
-    // Set up detection handler
-    Quagga.onDetected((result) => {
-      if (result && result.codeResult) {
-        if (onDetected) {
-          onDetected({
-            code: result.codeResult.code,
-            format: result.codeResult.format,
-            timestamp: new Date(),
-          })
+    Html5Qrcode.getCameras()
+      .then(devices => {
+        if (devices && devices.length) {
+          setCameras(devices)
+          setSelectedCamera(devices[0].id)
         }
-      }
-    })
+      })
+      .catch(err => {
+        console.error('Error getting cameras', err)
+        if (onError) {
+          onError('Unable to access camera. Please check permissions.')
+        }
+      })
+  }, [onError])
 
-    // Set up processing handler for drawing
-    Quagga.onProcessed((result) => {
-      const drawingCanvas = document.querySelector('.scanner-container canvas.drawingBuffer')
-      if (drawingCanvas) {
-        const ctx = drawingCanvas.getContext('2d')
-        if (result) {
-          if (result.boxes) {
-            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
-            result.boxes.forEach((box) => {
-              if (box !== result.box) {
-                ctx.strokeStyle = 'green'
-                ctx.lineWidth = 2
-                ctx.strokeRect(box[0], box[1], box[2] - box[0], box[3] - box[1])
-              }
+  // Start scanner
+  const startScanner = async () => {
+    if (!scannerRef.current || !selectedCamera) return
+
+    try {
+      const html5QrCode = new Html5Qrcode("scanner-container")
+      html5QrCodeRef.current = html5QrCode
+
+      await html5QrCode.start(
+        selectedCamera,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        (decodedText, decodedResult) => {
+          if (onDetected) {
+            onDetected({
+              code: decodedText,
+              format: decodedResult.result.format ? decodedResult.result.format.toString() : 'QR Code',
+              timestamp: new Date()
             })
           }
-
-          if (result.box) {
-            ctx.strokeStyle = 'red'
-            ctx.lineWidth = 2
-            ctx.strokeRect(
-              result.box.x,
-              result.box.y,
-              result.box.width,
-              result.box.height
-            )
-          }
-
-          if (result.codeResult && result.codeResult.code) {
-            ctx.font = '24px Arial'
-            ctx.fillStyle = 'red'
-            ctx.fillText(result.codeResult.code, 10, 50)
-          }
+          // Don't stop scanner automatically after detection
+          // to allow continuous scanning if needed
+        },
+        (errorMessage) => {
+          // This is a silent error callback for scanning process
+          // console.error("QR Code scanning error:", errorMessage)
         }
-      }
-    })
-  }
+      )
 
-  // Start scanning
-  const startScanner = () => {
-    initScanner()
-  }
-
-  // Stop scanning
-  const stopScanner = () => {
-    if (isScanning) {
-      Quagga.stop()
-      setIsScanning(false)
-    }
-  }
-
-  // Toggle torch
-  const toggleTorch = () => {
-    const stream = Quagga.CameraAccess.getActiveStream()
-    if (stream) {
-      const track = stream.getVideoTracks()[0]
-      
-      // Check if torch is supported
-      if (track.getCapabilities && track.getCapabilities().torch) {
-        track.applyConstraints({
-          advanced: [{ torch: !torchOn }]
-        }).then(() => {
-          setTorchOn(!torchOn)
-        }).catch(err => {
-          console.error('Error toggling torch', err)
-        })
-      } else {
-        console.warn('Torch not supported on this device')
+      setIsScanning(true)
+    } catch (err) {
+      console.error('Error starting scanner:', err)
+      if (onError) {
+        onError('Failed to start scanner: ' + err.message)
       }
     }
   }
 
-  // Toggle scanning
-  const toggleScanner = () => {
-    if (isScanning) {
-      stopScanner()
-    } else {
-      startScanner()
+  // Stop scanner
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current && isScanning) {
+      try {
+        await html5QrCodeRef.current.stop()
+        setIsScanning(false)
+        setTorchOn(false)
+      } catch (err) {
+        console.error('Error stopping scanner:', err)
+      }
     }
   }
 
-  // Auto-start scanner if specified
+  // Toggle torch/flashlight
+  const toggleTorch = async () => {
+    if (!html5QrCodeRef.current || !isScanning) return
+
+    try {
+      const newTorchState = !torchOn
+      await html5QrCodeRef.current.applyVideoConstraints({
+        advanced: [{ torch: newTorchState }]
+      })
+      setTorchOn(newTorchState)
+    } catch (err) {
+      console.error('Error toggling torch:', err)
+      if (onError) {
+        onError('Your device may not support flashlight control.')
+      }
+    }
+  }
+
+  // Clean up
   useEffect(() => {
-    if (startOnMount) {
-      startScanner()
-    }
-
-    // Cleanup on unmount
     return () => {
-      stopScanner()
+      if (html5QrCodeRef.current && isScanning) {
+        html5QrCodeRef.current.stop()
+          .catch(err => console.error('Error stopping scanner on unmount:', err))
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startOnMount])
+  }, [isScanning])
 
   return {
     scannerRef,
@@ -192,7 +123,6 @@ const useScanner = ({ onDetected, startOnMount = false }) => {
     torchOn,
     startScanner,
     stopScanner,
-    toggleScanner,
     toggleTorch
   }
 }

@@ -1,75 +1,49 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Box,
-  Flex,
-  Heading,
-  Button,
-  IconButton,
-  Image
-} from '@chakra-ui/react'
-import { FaArrowLeft, FaHome } from 'react-icons/fa'
 
 /**
- * Header component with navigation
+ * Header component for app pages
  * @param {Object} props - Component props
- * @param {string} props.title - Page title
+ * @param {string} props.title - Header title
+ * @param {React.ReactNode} props.rightElement - Element to display on the right
  * @returns {JSX.Element} Header component
  */
-const Header = ({ title }) => {
+const Header = ({ title, rightElement }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const isHomePage = location.pathname === '/'
-
+  
+  const handleBack = () => {
+    navigate(-1)
+  }
+  
   return (
-    <Flex 
-      as="header" 
-      justify="space-between" 
-      align="center" 
-      py={4} 
-      mb={6}
-    >
-      {!isHomePage ? (
-        <IconButton
-          aria-label="Go back"
-          icon={<FaArrowLeft />}
-          variant="ghost"
-          onClick={() => navigate(-1)}
-        />
-      ) : (
-        <Box w="40px" /> // Spacer for alignment
+    <header className="page-header">
+      {!isHomePage && (
+        <button 
+          onClick={handleBack}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            color: '#4a5568'
+          }}
+        >
+          &larr
+        </button>
       )}
-
-      {isHomePage ? (
-        <Flex align="center">
-          <Image 
-            src="/logo.png" 
-            alt="App Logo" 
-            boxSize="30px" 
-            mr={2}
-            fallbackSrc="https://via.placeholder.com/30"
-          />
-          <Heading as="h1" size="lg">
-            {title || 'QR Scanner'}
-          </Heading>
-        </Flex>
+      
+      <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
+        {title || 'QR Scanner'}
+      </h1>
+      
+      {rightElement ? (
+        rightElement
       ) : (
-        <Heading as="h1" size="lg">
-          {title || 'QR Scanner'}
-        </Heading>
+        <div style={{ width: '24px' }}></div> // Spacer for alignment
       )}
-
-      {!isHomePage ? (
-        <IconButton
-          aria-label="Go home"
-          icon={<FaHome />}
-          variant="ghost"
-          onClick={() => navigate('/')}
-        />
-      ) : (
-        <Box w="40px" /> // Spacer for alignment
-      )}
-    </Flex>
+    </header>
   )
 }
 

@@ -1,15 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Container,
-  Text,
-  useToast,
-} from '@chakra-ui/react'
 import { useScanContext } from '../contexts/ScanContext'
-import Header from '../components/Layout/Header'
-import ScannerView from '../components/Scanner/ScannerView'
 import { processScanResult } from '../services/scannerService'
+import Header from '../components/Layout/Header'
+import Footer from '../components/Layout/Footer'
+import ScannerView from '../components/Scanner/ScannerView'
 
 /**
  * Scanner page component
@@ -17,13 +12,13 @@ import { processScanResult } from '../services/scannerService'
  */
 const Scanner = () => {
   const navigate = useNavigate()
-  const toast = useToast()
   const { setScanResult, addToHistory } = useScanContext()
-
+  const [error, setError] = useState(null)
+  
   // Handle successful scan
-  const handleScan = (result) => {
-    if (!result || !result.code) return
-
+  const handleScanSuccess = (result) => {
+    if (!result) return
+    
     // Process the scan result
     const processedResult = processScanResult(result)
     
@@ -31,30 +26,41 @@ const Scanner = () => {
     setScanResult(processedResult)
     addToHistory(processedResult)
     
-    // Show success toast
-    toast({
-      title: "Code detected!",
-      description: `${result.format}: ${result.code.substring(0, 20)}${result.code.length > 20 ? '...' : ''}`,
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    })
-    
-    // Navigate to results
+    // Navigate to results page
     navigate('/results')
   }
   
+  // Handle scan error
+  const handleScanError = (err) => {
+    setError(err)
+  }
+  
   return (
-    <Container maxW="container.md" p={4}>
+    <div className="container">
       <Header title="Scan QR Code" />
       
-      <ScannerView onDetected={handleScan} />
+      <ScannerView 
+        onScanSuccess={handleScanSuccess}
+        onScanError={handleScanError}
+      />
       
-      <Text fontSize="sm" color="gray.500" textAlign="center" mt={8}>
-        Position the QR code within the scanner area.
-        Make sure it's well-lit and your camera is focused.
-      </Text>
-    </Container>
+      {error && (
+        <div 
+          style={{
+            padding: '0.5rem',
+            backgroundColor: '#fff5f5',
+            color: '#c53030',
+            borderRadius: '0.25rem',
+            marginBottom: '1rem',
+            fontSize: '0.875rem'
+          }}
+        >
+          {error}
+        </div>
+      )}
+      
+      <Footer />
+    </div>
   )
 }
 

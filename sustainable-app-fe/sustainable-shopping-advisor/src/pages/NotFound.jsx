@@ -1,40 +1,58 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Box,
-  Button,
-  Container,
-  Heading,
-  Text,
-  VStack,
-} from '@chakra-ui/react'
 import Header from '../components/Layout/Header'
+import Footer from '../components/Layout/Footer'
+import Button from '../components/UI/Button'
 
 /**
- * 404 Not Found page
- * @returns {JSX.Element} Not Found page
+ * Not found (404) page component
+ * @returns {JSX.Element} Not found page
  */
 const NotFound = () => {
   return (
-    <Container maxW="container.md" p={4}>
+    <div className="container">
       <Header title="Page Not Found" />
       
-      <VStack spacing={8} py={12} textAlign="center">
-        <Heading as="h1" size="4xl" color="gray.400">
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: '3rem 1rem'
+        }}
+      >
+        <h1 
+          style={{
+            fontSize: '5rem',
+            fontWeight: 'bold',
+            color: '#a0aec0',
+            margin: '0 0 1rem 0'
+          }}
+        >
           404
-        </Heading>
+        </h1>
         
-        <Text fontSize="xl">
+        <p 
+          style={{
+            fontSize: '1.25rem',
+            marginBottom: '2rem',
+            color: '#4a5568'
+          }}
+        >
           The page you're looking for doesn't exist or has been moved.
-        </Text>
+        </p>
         
-        <Link to="/">
-          <Button colorScheme="blue" size="lg">
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Button variant="primary" size="lg">
             Return Home
           </Button>
         </Link>
-      </VStack>
-    </Container>
+      </div>
+      
+      <Footer />
+    </div>
   )
 }
 

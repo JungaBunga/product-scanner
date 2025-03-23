@@ -1,29 +1,25 @@
-import React from 'react'
-import {
-  Box,
-  Button,
-  Flex,
-  Text,
-  HStack,
-  FormControl,
-  FormLabel,
-  Select,
-  Icon,
-  useToast
-} from '@chakra-ui/react'
+import React, { useState } from 'react'
 import { FaLightbulb, FaCamera } from 'react-icons/fa'
 import useScanner from '../../hooks/useScanner'
+import Button from '../UI/Button'
 
 /**
- * Scanner view component for handling camera and scanning
+ * Scanner view component
  * @param {Object} props - Component props
- * @param {Function} props.onDetected - Callback when code is detected
- * @returns {JSX.Element} Scanner component
+ * @param {Function} props.onScanSuccess - Callback when scan succeeds
+ * @param {Function} props.onScanError - Callback when scan errors
+ * @returns {JSX.Element} Scanner view component
  */
-const ScannerView = ({ onDetected }) => {
-  const toast = useToast()
+const ScannerView = ({ onScanSuccess, onScanError }) => {
+  const [error, setError] = useState(null)
   
-  // Initialize scanner hook
+  const handleError = (err) => {
+    setError(err)
+    if (onScanError) {
+      onScanError(err)
+    }
+  }
+  
   const {
     scannerRef,
     isScanning,
@@ -31,101 +27,144 @@ const ScannerView = ({ onDetected }) => {
     selectedCamera,
     setSelectedCamera,
     torchOn,
-    toggleScanner,
+    startScanner,
+    stopScanner,
     toggleTorch
   } = useScanner({
-    onDetected: (result) => {
-      // Stop scanner when code is detected
-      if (isScanning) {
-        toggleScanner()
-      }
-      
-      // Call the provided callback
-      if (onDetected) {
-        onDetected(result)
-      }
-    }
+    onDetected: onScanSuccess,
+    onError: handleError
   })
-
-  // Handle torch toggle with toast feedback
-  const handleTorchToggle = () => {
-    try {
-      toggleTorch()
-    } catch (error) {
-      toast({
-        title: "Torch Error",
-        description: "Could not toggle flashlight. Your device may not support this feature.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      })
-    }
-  }
-
+  
   return (
-    <>
-      <Box 
-        className="scanner-container"
+    <div className="scanner-view">
+      <div 
+        id="scanner-container"
         ref={scannerRef}
-        position="relative"
-        borderRadius="md"
-        overflow="hidden"
-        boxShadow="md"
-        h="350px"
-        bg="gray.100"
+        className="scanner-container"
+        style={{
+          position: 'relative',
+          height: '350px',
+          backgroundColor: '#f7fafc',
+          borderRadius: '0.5rem',
+          overflow: 'hidden',
+          border: '1px solid #e2e8f0',
+          marginBottom: '1rem'
+        }}
       >
         {!isScanning && (
-          <Flex 
-            direction="column" 
-            align="center" 
-            justify="center" 
-            h="100%"
-            p={4}
+          <div 
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: '1rem'
+            }}
           >
-            <Icon as={FaCamera} boxSize={12} color="gray.400" mb={4} />
-            <Text fontSize="lg" textAlign="center" color="gray.500">
-              Click "Start Camera" to begin scanning
-            </Text>
-          </Flex>
+            <FaCamera 
+              size={48} 
+              color="#a0aec0" 
+              style={{ marginBottom: '1rem' }}
+            />
+            <p style={{ textAlign: 'center', color: '#718096' }}>
+              Click "Start Scanner" to begin scanning
+            </p>
+          </div>
         )}
-      </Box>
+      </div>
       
-      <HStack spacing={4} mt={4}>
-        <Button 
-          colorScheme={isScanning ? "red" : "green"} 
-          w="full"
-          onClick={toggleScanner}
+      <div 
+        className="scanner-controls"
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '1rem'
+        }}
+      >
+        <Button
+          onClick={isScanning ? stopScanner : startScanner}
+          variant={isScanning ? 'secondary' : 'primary'}
+          fullWidth
         >
-          {isScanning ? "Stop Camera" : "Start Camera"}
+          {isScanning ? 'Stop Scanner' : 'Start Scanner'}
         </Button>
         
         {isScanning && (
-          <Button 
-            leftIcon={<FaLightbulb />} 
-            colorScheme={torchOn ? "yellow" : "gray"}
-            onClick={handleTorchToggle}
+          <Button
+            onClick={toggleTorch}
+            variant="outline"
+            icon={<FaLightbulb />}
           >
-            {torchOn ? "Torch On" : "Torch Off"}
+            {torchOn ? 'Torch On' : 'Torch Off'}
           </Button>
         )}
-      </HStack>
+      </div>
       
       {cameras.length > 1 && (
-        <FormControl mt={4}>
-          <FormLabel>Camera</FormLabel>
-          <Select 
-            value={selectedCamera || ''} 
-            onChange={(e) => setSelectedCamera(e.target.value)}
+        <div className="camera-selector" style={{ marginBottom: '1rem' }}>
+          <label 
+            htmlFor="camera-select" 
+            style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}
           >
-            {cameras.map((camera, index) => (
-              <option key={camera.deviceId} value={camera.deviceId}>
-                Camera {index + 1} {camera.label ? `(${camera.label})` : ''}
+            Select Camera
+          </label>
+          <select
+            id="camera-select"
+            value={selectedCamera || ''}
+            onChange={(e) => setSelectedCamera(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              borderRadius: '0.25rem',
+              border: '1px solid #e2e8f0',
+              backgroundColor: 'white'
+            }}
+            disabled={isScanning}
+          >
+            {cameras.map((camera) => (
+              <option key={camera.id} value={camera.id}>
+                {camera.label || `Camera ${camera.id}`}
               </option>
             ))}
-          </Select>
-        </FormControl>
+          </select>
+        </div>
       )}
-    </>
+      
+      {error && (
+        <div 
+          className="scanner-error"
+          style={{
+            padding: '0.5rem',
+            backgroundColor: '#fff5f5',
+            color: '#c53030',
+            borderRadius: '0.25rem',
+            marginBottom: '1rem',
+            fontSize: '0.875rem'
+          }}
+        >
+          {error}
+        </div>
+      )}
+      
+      <p 
+        className="scanner-help"
+        style={{
+          fontSize: '0.875rem',
+          color: '#718096',
+          textAlign: 'center',
+          margin: '1rem 0'
+        }}
+      >
+        Position the QR code within the scanner area.
+        Make sure it's well-lit and your camera is focused.
+      </p>
+    </div>
   )
 }
 

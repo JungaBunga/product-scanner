@@ -1,79 +1,78 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Box,
-  Button,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  Image,
-  useColorModeValue,
-} from '@chakra-ui/react'
 import { FaQrcode, FaHistory } from 'react-icons/fa'
 import Header from '../components/Layout/Header'
+import Footer from '../components/Layout/Footer'
+import Card from '../components/UI/Card'
 
 /**
  * Home page component
  * @returns {JSX.Element} Home page
  */
 const Home = () => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800')
-  const cardBgColor = useColorModeValue('white', 'gray.700')
-
   return (
-    <Box bg={bgColor} minH="100vh" py={4}>
-      <Container maxW="container.md">
-        <Header title="QR Scanner App" />
+    <div className="container">
+      <Header title="QR Scanner App" />
+      
+      <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
+        <img 
+          src="/logo.png" 
+          alt="QR Scanner App" 
+          style={{ 
+            maxWidth: '120px', 
+            marginBottom: '1.5rem' 
+          }}
+          onError={(e) => {
+            e.target.onerror = null
+            e.target.src = 'https://via.placeholder.com/120'
+          }}
+        />
         
-        <VStack spacing={8} align="center">
-          <Image 
-            src="/logo.png" 
-            alt="App Logo" 
-            boxSize="120px"
-            fallbackSrc="https://via.placeholder.com/120"
-          />
-          
-          <Text fontSize="xl" textAlign="center" color="gray.500">
-            Quickly scan QR codes and barcodes with your device's camera
-          </Text>
-          
-          <Box 
-            w="full" 
-            bg={cardBgColor} 
-            p={8} 
-            borderRadius="lg" 
-            boxShadow="md"
+        <p style={{ color: '#718096', marginBottom: '2rem' }}>
+          Quickly scan QR codes and barcodes with your device's camera
+        </p>
+        
+        <Card>
+          <Link 
+            to="/scan" 
+            style={{
+              display: 'block',
+              backgroundColor: '#4299e1',
+              color: 'white',
+              padding: '0.75rem',
+              borderRadius: '0.25rem',
+              textDecoration: 'none',
+              fontWeight: 500,
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}
           >
-            <VStack spacing={4} align="stretch">
-              <Link to="/scan">
-                <Button 
-                  leftIcon={<FaQrcode />} 
-                  colorScheme="brand" 
-                  size="lg" 
-                  h="60px"
-                  w="full"
-                >
-                  Start Scanning
-                </Button>
-              </Link>
-              
-              <Link to="/results">
-                <Button 
-                  leftIcon={<FaHistory />} 
-                  variant="outline" 
-                  size="lg"
-                  h="60px" 
-                  w="full"
-                >
-                  View Scan History
-                </Button>
-              </Link>
-            </VStack>
-          </Box>
-        </VStack>
-      </Container>
-    </Box>
+            <FaQrcode style={{ marginRight: '0.5rem' }} />
+            Start Scanning
+          </Link>
+          
+          <Link 
+            to="/results" 
+            style={{
+              display: 'block',
+              backgroundColor: 'transparent',
+              color: '#4299e1',
+              padding: '0.75rem',
+              borderRadius: '0.25rem',
+              textDecoration: 'none',
+              fontWeight: 500,
+              border: '1px solid #4299e1',
+              textAlign: 'center'
+            }}
+          >
+            <FaHistory style={{ marginRight: '0.5rem' }} />
+            View Scan History
+          </Link>
+        </Card>
+      </div>
+      
+      <Footer />
+    </div>
   )
 }
 

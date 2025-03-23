@@ -13,79 +13,84 @@ export const isUrl = (code) => {
   }
   
   /**
-   * Format scan timestamp
-   * @param {Date|string} timestamp - Timestamp to format
-   * @returns {string} Formatted timestamp
+   * Check if scanned content is an email
+   * @param {string} code - Scanned code content
+   * @returns {boolean} Whether the code is an email
    */
-  export const formatTimestamp = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
-    return date.toLocaleString()
+  export const isEmail = (code) => {
+    if (!code) return false
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(code)
   }
   
   /**
-   * Process raw scan result
-   * @param {Object} result - Raw scan result from scanner
-   * @returns {Object} Processed scan data
+   * Check if scanned content is a phone number
+   * @param {string} code - Scanned code content
+   * @returns {boolean} Whether the code is a phone number
+   */
+  export const isPhoneNumber = (code) => {
+    if (!code) return false
+    return /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(code)
+  }
+  
+  /**
+   * Process scan result to determine type and format
+   * @param {Object} result - Raw scan result
+   * @returns {Object} Processed scan result with type
    */
   export const processScanResult = (result) => {
     if (!result) return null
     
+    let type = 'text'
+    
+    if (isUrl(result.code)) {
+      type = 'url'
+    } else if (isEmail(result.code)) {
+      type = 'email'
+    } else if (isPhoneNumber(result.code)) {
+      type = 'phone'
+    }
+    
     return {
-      code: result.code,
-      format: result.format,
-      timestamp: result.timestamp || new Date(),
-      isUrl: isUrl(result.code)
+      ...result,
+      type
     }
   }
   
   /**
    * Store scan in local storage
-   * @param {Object} scan - Scan data to store
+   * @param {Object} scan - Scan to store
    */
   export const storeScan = (scan) => {
-    try {
-      const storedScans = getStoredScans()
-      const updatedScans = [
-        {
-          id: Date.now(),
-          data: scan,
-          timestamp: new Date()
-        },
-        ...storedScans
-      ]
-      
-      localStorage.setItem('scanHistory', JSON.stringify(updatedScans))
-      return true
-    } catch (error) {
-      console.error('Error storing scan', error)
-      return false
-    }
+    if (!scan) return
+    
+    // Get existing scans
+    const existingScans = JSON.parse(localStorage.getItem('scanHistory') || '[]')
+    
+    // Add new scan to beginning of array
+    const newScans = [
+      {
+        id: Date.now(),
+        ...scan,
+        timestamp: new Date().toISOString()
+      },
+      ...existingScans
+    ]
+    
+    // Store back in localStorage (limit to 100 most recent scans)
+    localStorage.setItem('scanHistory', JSON.stringify(newScans.slice(0, 100)))
   }
   
   /**
    * Get scans from local storage
-   * @returns {Array} Stored scans
+   * @returns {Array} Array of stored scans
    */
   export const getStoredScans = () => {
-    try {
-      const scans = localStorage.getItem('scanHistory')
-      return scans ? JSON.parse(scans) : []
-    } catch (error) {
-      console.error('Error retrieving scans', error)
-      return []
-    }
+    return JSON.parse(localStorage.getItem('scanHistory') || '[]')
   }
   
   /**
    * Clear scan history from local storage
    */
   export const clearStoredScans = () => {
-    try {
-      localStorage.removeItem('scanHistory')
-      return true
-    } catch (error) {
-      console.error('Error clearing scans', error)
-      return false
-    }
+    localStorage.removeItem('scanHistory')
   }

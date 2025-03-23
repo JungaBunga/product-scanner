@@ -1,48 +1,99 @@
 import React from 'react'
-import { Button as ChakraButton } from '@chakra-ui/react'
 
 /**
- * Custom button component
+ * Button component
  * @param {Object} props - Component props
- * @param {string} props.variant - Button variant (solid, outline, ghost, link)
- * @param {string} props.size - Button size (xs, sm, md, lg)
  * @param {React.ReactNode} props.children - Button content
+ * @param {string} props.variant - Button variant (primary, secondary, outline, danger)
+ * @param {string} props.size - Button size (sm, md, lg)
  * @param {Function} props.onClick - Click handler
- * @param {boolean} props.isFullWidth - Whether button should take full width
- * @param {string} props.colorScheme - Button color scheme
+ * @param {boolean} props.fullWidth - Whether button should take full width
+ * @param {React.ReactNode} props.icon - Icon to display
+ * @param {string} props.type - Button type (button, submit, reset)
+ * @param {boolean} props.disabled - Whether button is disabled
+ * @param {Object} props.style - Additional styles
  * @returns {JSX.Element} Button component
  */
-const Button = ({ 
-  variant = 'solid', 
-  size = 'md', 
-  children, 
-  onClick, 
-  isFullWidth = false, 
-  colorScheme = 'brand',
-  ...rest 
+const Button = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  onClick,
+  fullWidth = false,
+  icon,
+  type = 'button',
+  disabled = false,
+  style = {},
+  ...rest
 }) => {
+  // Base styles
+  const baseStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '0.25rem',
+    fontWeight: 500,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.6 : 1,
+    transition: 'all 0.2s',
+    border: 'none',
+    width: fullWidth ? '100%' : undefined,
+    ...style
+  }
+  
+  // Size styles
+  const sizeStyles = {
+    sm: { fontSize: '0.875rem', padding: '0.375rem 0.75rem' },
+    md: { fontSize: '1rem', padding: '0.5rem 1rem' },
+    lg: { fontSize: '1.125rem', padding: '0.625rem 1.25rem' }
+  }
+  
+  // Variant styles
+  const variantStyles = {
+    primary: { 
+      backgroundColor: '#4299e1', 
+      color: 'white',
+      border: 'none'
+    },
+    secondary: { 
+      backgroundColor: '#a0aec0', 
+      color: 'white',
+      border: 'none'
+    },
+    outline: { 
+      backgroundColor: 'transparent',
+      color: '#4299e1',
+      border: '1px solid #4299e1'
+    },
+    danger: { 
+      backgroundColor: '#e53e3e',
+      color: 'white',
+      border: 'none'
+    }
+  }
+  
+  // Combine styles
+  const combinedStyle = {
+    ...baseStyle,
+    ...sizeStyles[size],
+    ...variantStyles[variant]
+  }
+  
   return (
-    <ChakraButton
-      variant={variant}
-      size={size}
-      onClick={onClick}
-      width={isFullWidth ? 'full' : 'auto'}
-      colorScheme={colorScheme}
-      borderRadius="md"
-      fontWeight="medium"
-      transition="all 0.2s"
-      _hover={{
-        transform: 'translateY(-2px)',
-        boxShadow: 'md',
-      }}
-      _active={{
-        transform: 'translateY(0)',
-        boxShadow: 'sm',
-      }}
+    <button
+      type={type}
+      onClick={disabled ? undefined : onClick}
+      style={combinedStyle}
+      disabled={disabled}
       {...rest}
     >
+      {icon && (
+        <span style={{ marginRight: children ? '0.5rem' : 0 }}>
+          {icon}
+        </span>
+      )}
       {children}
-    </ChakraButton>
+    </button>
   )
 }
 

@@ -4,74 +4,74 @@
 
 /**
  * Check if a string is a valid URL
- * @param {string} str - String to check
+ * @param {string} text - String to check
  * @returns {boolean} Whether the string is a valid URL
  */
-export const isValidUrl = (str) => {
-    if (!str) return false
+export const isValidUrl = (text) => {
+    if (!text) return false
     
     try {
-      const url = new URL(str)
+      const url = new URL(text)
       return url.protocol === 'http:' || url.protocol === 'https:'
-    } catch {
+    } catch (error) {
       return false
     }
   }
   
   /**
    * Check if a string is a valid email
-   * @param {string} str - String to check
+   * @param {string} text - String to check
    * @returns {boolean} Whether the string is a valid email
    */
-  export const isValidEmail = (str) => {
-    if (!str) return false
+  export const isValidEmail = (text) => {
+    if (!text) return false
     
+    // Basic email regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(str)
+    return emailRegex.test(text)
   }
   
   /**
    * Check if a string is a valid phone number
-   * @param {string} str - String to check
+   * @param {string} text - String to check
    * @returns {boolean} Whether the string is a valid phone number
    */
-  export const isValidPhone = (str) => {
-    if (!str) return false
+  export const isValidPhone = (text) => {
+    if (!text) return false
     
-    // Basic phone validation - adjust based on your requirements
+    // Basic phone regex - various formats accepted
     const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/
-    return phoneRegex.test(str)
+    return phoneRegex.test(text)
   }
   
   /**
-   * Detect the type of content in a scanned code
-   * @param {string} code - Scanned code content
-   * @returns {string} Content type
+   * Check if a string starts with a specific protocol
+   * @param {string} text - String to check
+   * @param {string} protocol - Protocol to check for
+   * @returns {boolean} Whether the string starts with the protocol
    */
-  export const detectContentType = (code) => {
-    if (!code) return 'text'
+  export const startsWithProtocol = (text, protocol) => {
+    if (!text || !protocol) return false
     
-    if (isValidUrl(code)) {
-      return 'url'
-    }
+    return text.toLowerCase().startsWith(protocol.toLowerCase())
+  }
+  
+  /**
+   * Validate a scan result
+   * @param {Object} result - Scan result to validate
+   * @returns {boolean} Whether the scan result is valid
+   */
+  export const isValidScanResult = (result) => {
+    if (!result) return false
     
-    if (isValidEmail(code)) {
-      return 'email'
-    }
+    // Must have code property
+    if (!result.code) return false
     
-    if (isValidPhone(code)) {
-      return 'phone'
-    }
+    // Code must be a string
+    if (typeof result.code !== 'string') return false
     
-    // Check if it's a vCard
-    if (code.startsWith('BEGIN:VCARD') && code.includes('END:VCARD')) {
-      return 'vcard'
-    }
+    // Code must not be empty
+    if (result.code.trim() === '') return false
     
-    // Check if it's a WiFi config
-    if (code.startsWith('WIFI:') && code.includes('WIFI:S:')) {
-      return 'wifi'
-    }
-    
-    return 'text'
+    return true
   }
