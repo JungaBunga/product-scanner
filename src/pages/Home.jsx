@@ -1,9 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { FaQrcode, FaHistory } from 'react-icons/fa'
-import Header from '../components/Layout/Header'
-import Footer from '../components/Layout/Footer'
-import Card from '../components/UI/Card'
+import Header from '../../src/components/Scanner/Layout/Header'
+import Footer from '../../src/components/Scanner/Layout/Footer'
+import Card from '../../src/components/UI/Card'
 
 /**
  * Home page component

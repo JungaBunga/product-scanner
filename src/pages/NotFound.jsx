@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import Header from '../components/Layout/Header'
-import Footer from '../components/Layout/Footer'
+import Header from '../components/Scanner/Layout/Header'
+import Footer from '../components/Scanner/Layout/Footer'
 import Button from '../components/UI/Button'
 
 /**
